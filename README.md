@@ -11,7 +11,7 @@
 
 # simple-lr
 
-<!-- description -->
+A simple and tiny livereload server and browser client, which powered by socket.io
 
 ## Install
 
@@ -22,8 +22,25 @@ $ npm install simple-lr --save
 ## Usage
 
 ```js
-var simple_lr = require('simple-lr');
+var lr = require('simple-lr')({
+  // Will patch the reload seed to neuron.js
+  patch: 'neuron.js'
+});
+
+var app = require('express')();
+app.use(lr);
+
+var server = require('http').createServer(app);
+lr.attach(server);
+
+server.listen(8000);
 ```
+
+The middleware will serve:
+
+- A restful api: `'/_reload?pathname=<pathname>'` notices the reload server, and the server will broadcast to all connected clients with a reload directive.
+- Patches reload seed to static file response if its pathname matches.
+- Hosts reload seed as `'/_reload.js'`. The seed will automatically connect the socket server.
 
 ## License
 
