@@ -15,9 +15,15 @@ function get_type (src) {
 function iterate (tag, callback) {
   var els = document.querySelectorAll(tag);
   var i = 0;
-  var len = els.length
+  var len = els.length;
+  var result;
   for (; i < len; i ++) {
-    callback(els[i]);
+    result = callback(els[i]);
+
+    // if returns true, then skip
+    if (result) {
+      return;
+    }
   }
 }
 
@@ -79,7 +85,39 @@ if (!window.WebSocket) {
   return;
 }
 
-var ws_server = '{{ws_server}}';
+
+var __filepath = '{{__filepath}}';
+
+function get_server () {
+  var server_found;
+  iterate('link', function (link) {
+    var href = link.getAttribute('href');
+    var index = href.indexOf(href);
+    if (~index) {
+      server_found = href.slice(0, index);
+      return true;
+    }
+  });
+
+  if (!server_found) {
+    return;
+  }
+
+  if (server_found.index('//') === 0) {
+    server_found = location.protocol + server_found;
+  }
+
+  return server_found;
+}
+
+
+// var ws_server = '{{ws_server}}';
+var ws_server = get_server();
+if (!ws_server) {
+  console.log('no patched file or reload seed found.');
+  return;
+}
+
 var ws = new WebSocket(ws_server);
 
 ws.onopen = function (event) {
