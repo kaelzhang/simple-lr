@@ -111,7 +111,6 @@ function get_server () {
 }
 
 
-// var ws_server = '{{ws_server}}';
 var ws_server = get_server();
 if (!ws_server) {
   console.log('no patched file or reload seed found.');

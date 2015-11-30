@@ -14,10 +14,10 @@ var lr = simple_lr({
 
 var root = node_path.join(__dirname, 'fixtures');
 app.use(lr);
-app.use(function (req, res) {
-  send(req, '/to-be-patched.js', {
-    root: root
-  }).pipe(res);
-});
+// app.use(function (req, res) {
+//   send(req, '/to-be-patched.js', {
+//     root: root
+//   }).pipe(res);
+// });
 
 app.listen(8000)

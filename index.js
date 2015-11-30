@@ -7,6 +7,8 @@ var fs = require('fs');
 var node_path = require('path');
 var escape = require('escape-regexp');
 var util = require('util');
+var mime = require('mime');
+
 
 // @param {Object} options
 // - 
@@ -16,16 +18,26 @@ function livereload (options) {
 
   function lr (req, res, next) {
     var path = req.url;
-    // if (!matcher || !matcher.test(path)) {
-    //   next();
-    // }
+
     if (path.indexOf('/_reload.js') !== 0) {
       return next();
     }
 
-    
-  }
+    get_seed(function (err, content) {
+      if (err) {
+        res.status(500).send(err.stack || err.message || err);
+        return res.end();
+      }
 
+      var type = mime.lookup(path);
+      var charset = mime.charsets.lookup(type);
+
+      content = content.replace('{{__pathname}}', path);
+      res.set('Content-Type', type + (charset ? '; charset=' + charset : ''));
+      res.send(content.replace());
+      res.end();
+    });
+  }
 
   function attach() {
     
