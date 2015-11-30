@@ -26,10 +26,13 @@
     "url": "https://github.com/kaelzhang/simple-lr/issues"
   },
   "devDependencies": {
-    "mocha": "*",
-    "chai": "*"
+    "chai": "*",
+    "express": "^4.13.3",
+    "mocha": "*"
   },
   "dependencies": {
+    "escape-regexp": "0.0.1",
+    "mime": "^1.3.4",
     "socket.io": "^1.3.7"
   }
 }

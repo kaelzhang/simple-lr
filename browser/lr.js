@@ -86,7 +86,7 @@ if (!window.WebSocket) {
 }
 
 
-var __filepath = '{{__filepath}}';
+var __pathname = '{{__pathname}}';
 
 function get_server () {
   var server_found;
