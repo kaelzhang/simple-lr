@@ -16,12 +16,16 @@ var node_url = require('url');
 function livereload (options) {
   options = options || {};
 
-  // var matcher = create_patch_regex(options.patch);
+  var matcher = create_patch_regex(options.patch);
   var io;
 
   function lr (req, res, next) {
     var parsed = node_url.parse(req.url, true);
     var path = parsed.pathname;
+
+    if (matcher && matcher.test(path)) {
+      return router_patch_reload_seed(req, path, res, next);
+    }
 
     if (path === '/_reload.js') {
       return router_reload_seed(req, res, next);
@@ -35,23 +39,40 @@ function livereload (options) {
   }
 
 
-  function router_reload_seed (req, res, next) {
-    var path = req.url;
+  function router_patch_reload_seed (req, path, res, next) {
+    var end = res.end;
+    var setHeader = res.setHeader;
+    
+    var seed = '\n\n' +  reload_seed.replace('{{__pathname}}', path);
 
-    get_seed(function (err, content) {
-      if (err) {
-        res.status(500).send(err.stack || err.message || err);
-        return res.end();
+    res.end = function (chunk, encoding, callback) {
+      res.write(seed);
+      return end.apply(res, arguments);
+    };
+
+    res.setHeader = function (type, length) {
+      if (type.toLowerCase() === 'content-length') {
+        // adds the seed length to the default length,
+        // if the `content-length` header is going to be set.
+        arguments[1] = length + seed.length;
       }
 
-      var type = mime.lookup(path);
-      var charset = mime.charsets.lookup(type);
+      return setHeader.apply(res, arguments);
+    }
 
-      content = content.replace('{{__pathname}}', path);
-      res.set('Content-Type', type + (charset ? '; charset=' + charset : ''));
-      res.send(content.replace());
-      res.end();
-    });
+    next();
+  }
+
+
+  function router_reload_seed (req, res, next) {
+    var path = req.url;
+    var type = mime.lookup(path);
+    var charset = mime.charsets.lookup(type);
+
+    var content = reload_seed.replace('{{__pathname}}', path);
+    res.set('Content-Type', type + (charset ? '; charset=' + charset : ''));
+    res.send(content.replace());
+    res.end();
   }
 
 
@@ -87,8 +108,6 @@ function livereload (options) {
     }
 
     io = socket(server);
-    // io.on('connection', function (socket) {
-    // });
   }
 
   lr.attach = attach;
@@ -97,38 +116,26 @@ function livereload (options) {
 }
 
 
-// function create_patch_regex (patch) {
-//   if (!patch) {
-//     return;
-//   }
+function create_patch_regex (patch) {
+  if (!patch) {
+    return;
+  }
 
-//   if (util.isRegExp(patch)) {
-//     return patch;
-//   }
+  if (util.isRegExp(patch)) {
+    return patch;
+  }
 
-//   if (typeof patch !== 'string') {
-//     return;
-//   }
+  if (typeof patch !== 'string') {
+    return;
+  }
 
-//   return new RegExp(escape(patch));
-// }
+  return new RegExp(escape(patch));
+}
 
 
 var reload_seed_file = node_path.join(__dirname, 'browser', 'lr-output.js');
-var reload_seed;
 
-// Method to get the livereload seed
-function get_seed (callback) {
-  if (reload_seed) {
-    return callback(null, reload_seed);
-  }
-
-  fs.readFile(reload_seed_file, function (err, content) {
-    if (err) {
-      return callback(err);
-    }
-
-    reload_seed = content.toString();
-    callback(null, reload_seed);
-  });
-}
+// It will throw if fails to read lr-output.js.
+// But when it happens, it is the booting stage of the server,
+// that we could make it right.
+var reload_seed = fs.readFileSync(reload_seed_file).toString();
