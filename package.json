@@ -4,6 +4,7 @@
   "description": "A simple and tiny livereload server and browser client.",
   "main": "index.js",
   "scripts": {
+    "prepublish": "browserify browser/lr.js -o browser/lr-output.js",
     "test": "mocha --reporter spec ./test/*.js"
   },
   "repository": {
@@ -26,6 +27,7 @@
     "url": "https://github.com/kaelzhang/simple-lr/issues"
   },
   "devDependencies": {
+    "browserify": "^12.0.1",
     "chai": "*",
     "express": "^4.13.3",
     "mocha": "*"

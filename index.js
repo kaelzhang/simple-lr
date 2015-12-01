@@ -16,13 +16,12 @@ var node_url = require('url');
 function livereload (options) {
   options = options || {};
 
-  var matcher = create_patch_regex(options.patch);
+  // var matcher = create_patch_regex(options.patch);
   var io = socket();
 
   io.on('connection', function () {
     console.log(arguments);
   });
-
 
   function lr (req, res, next) {
     var parsed = node_url.parse(req.url, true);
@@ -93,7 +92,7 @@ function create_patch_regex (patch) {
 }
 
 
-var reload_seed_file = node_path.join(__dirname, 'browser', 'lr.js');
+var reload_seed_file = node_path.join(__dirname, 'browser', 'lr-output.js');
 var reload_seed;
 
 // Method to get the livereload seed

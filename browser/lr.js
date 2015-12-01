@@ -1,5 +1,6 @@
-;(function (window, document) {
 'use strict';
+
+var node_url = require('url');
 
 var REGEX_EXT = /\.([a-z0-9])$/i;
 
@@ -86,28 +87,52 @@ if (!window.WebSocket) {
 }
 
 
+function print (link) {
+  console.log(link, parse_url(link));
+}
+
+
 var __pathname = '{{__pathname}}';
 
 function get_server () {
-  var server_found;
-  iterate('link', function (link) {
-    var href = link.getAttribute('href');
-    var index = href.indexOf(href);
+  var link_found;
+  iterate('script', function (link) {
+    var src = link.getAttribute('src');
+    var index = src.indexOf(__pathname);
     if (~index) {
-      server_found = href.slice(0, index);
+      link_found = src;
       return true;
     }
   });
 
-  if (!server_found) {
+  if (!link_found) {
     return;
   }
 
-  if (server_found.index('//') === 0) {
-    server_found = location.protocol + server_found;
+  var parsed;
+
+  if (link_found.indexOf('//') === 0) {
+    link_found += location.protocol === 'https:'
+      ? 'wss:'
+      : 'ws:';
+
+    parsed = node_url.parse(link_found);
+    return parsed.protocol + '//' + parsed.host;
   }
 
-  return server_found;
+  parsed = node_url.parse(link_found);
+  parsed.protocol = parsed.protocol || location.protocol;
+  parsed.host = parsed.host || location.host;
+
+  if (!parsed.protocol || !parsed.host) {
+    return;
+  }
+
+  var protocol = parsed.protocol === 'https'
+    ? 'wss:'
+    : 'ws:';
+
+  return protocol + '//' + parsed.host;
 }
 
 
@@ -130,7 +155,3 @@ ws.onopen = function (event) {
     console.log('close', event);
   };
 };
-
-
-})(window, document);
-
