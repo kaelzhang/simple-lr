@@ -9,19 +9,39 @@ var escape = require('escape-regexp');
 var util = require('util');
 var mime = require('mime');
 
+var node_url = require('url');
 
 // @param {Object} options
 // - 
 function livereload (options) {
   options = options || {};
+
   var matcher = create_patch_regex(options.patch);
+  var io = socket();
+
+  io.on('connection', function () {
+    console.log(arguments);
+  });
+
 
   function lr (req, res, next) {
-    var path = req.url;
+    var parsed = node_url.parse(req.url, true);
+    var path = parsed.pathname;
 
-    if (path.indexOf('/_reload.js') !== 0) {
-      return next();
+    if (path === '/_reload.js') {
+      return router_reload_seed(req, res, next);
     }
+
+    if (path === '/_reload') {
+      return router_reload(req, parsed.query, res, next);
+    }
+    
+    next();
+  }
+
+
+  function router_reload_seed (req, res, next) {
+    var path = req.url;
 
     get_seed(function (err, content) {
       if (err) {
@@ -39,9 +59,16 @@ function livereload (options) {
     });
   }
 
-  function attach() {
-    
+
+  function router_reload (req, query, res, next) {
+    io.emit('reload', query.file);
   }
+
+
+  function attach (server) {
+    io.attach(server);
+  }
+
 
   lr.attach = attach;
 
