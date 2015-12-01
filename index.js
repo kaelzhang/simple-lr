@@ -17,11 +17,7 @@ function livereload (options) {
   options = options || {};
 
   // var matcher = create_patch_regex(options.patch);
-  var io = socket();
-
-  io.on('connection', function () {
-    console.log(arguments);
-  });
+  var io;
 
   function lr (req, res, next) {
     var parsed = node_url.parse(req.url, true);
@@ -60,14 +56,40 @@ function livereload (options) {
 
 
   function router_reload (req, query, res, next) {
+    var file = query.file;
+
+    if (!io) {
+      return res.status(200).send({
+        code: 500,
+        message: 'reload socket not attached.'
+      }).end();
+    }
+
+    if (!file) {
+      return res.status(200).send({
+        code: 404,
+        message: 'query "file" not specified.'
+      });
+    }
+
     io.emit('reload', query.file);
+
+    res.status(200).send({
+      code: 200,
+      file: file
+    }).end();
   }
 
 
   function attach (server) {
-    io.attach(server);
-  }
+    if (io) {
+      throw new Error('.attach() should not be called more than once.');
+    }
 
+    io = socket(server);
+    // io.on('connection', function (socket) {
+    // });
+  }
 
   lr.attach = attach;
 
@@ -75,21 +97,21 @@ function livereload (options) {
 }
 
 
-function create_patch_regex (patch) {
-  if (!patch) {
-    return;
-  }
+// function create_patch_regex (patch) {
+//   if (!patch) {
+//     return;
+//   }
 
-  if (util.isRegExp(patch)) {
-    return patch;
-  }
+//   if (util.isRegExp(patch)) {
+//     return patch;
+//   }
 
-  if (typeof patch !== 'string') {
-    return;
-  }
+//   if (typeof patch !== 'string') {
+//     return;
+//   }
 
-  return new RegExp(escape(patch));
-}
+//   return new RegExp(escape(patch));
+// }
 
 
 var reload_seed_file = node_path.join(__dirname, 'browser', 'lr-output.js');

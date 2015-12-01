@@ -1,13 +1,15 @@
 'use strict';
 
 var node_url = require('url');
+var io = require('socket.io-client');
 
-var REGEX_EXT = /\.([a-z0-9])$/i;
 
 function reload (src) {
-  TYPE[get_type(src)](src);
+  var type = get_type(src);
+  TYPE[type](src);
 }
 
+var REGEX_EXT = /\.([a-z0-9]+)$/i;
 function get_type (src) {
   var match = src.match(REGEX_EXT);
   return match && match[1].toLowerCase() || 'img';
@@ -34,27 +36,18 @@ var REGEX_ENDS_WITH_AMPERSAND = /&$/
 
 // @param {String} value to make it simple, only deal with String type of value
 function append_query (href, key, value) {
-  // The following search query is allowed
-  // - ?
-  // - ?a
-  // - ?a&b=1
-  // - ?&b=1
-  var pair = key + '=' + value;
+  var parsed = node_url.parse(href, true);
+  parsed.query[key] = value;
 
-  if (!REGEX_QUESTION_MARK.test(href)) {
-    return href + '?' + pair;
-  }
-
-  if (REGEX_ENDS_WITH_AMPERSAND.test(href)) {
-    return href + pair;
-  }
-
-  return href + '&' + pair;
+  // 
+  delete parsed.search;
+  return node_url.format(parsed);
 }
 
 
 function refresh_attribute (node, test, attr) {
   var value = node.getAttribute(attr);
+
   if (~value.indexOf(test)) {
     node.setAttribute(attr, append_query(value, '_lr', + new Date));
   }
@@ -70,7 +63,7 @@ var TYPE = {
 
   js: function (src) {
     // TODO, use browser extension system to reload javascript
-    window.reload();
+    location.reload();
   },
 
   img: function (src) {
@@ -84,11 +77,6 @@ var TYPE = {
 if (!window.WebSocket) {
   console.error('websocket is not supported.');
   return;
-}
-
-
-function print (link) {
-  console.log(link, parse_url(link));
 }
 
 
@@ -142,16 +130,8 @@ if (!ws_server) {
   return;
 }
 
-var ws = new WebSocket(ws_server);
-
-ws.onopen = function (event) {
-  socket.send('init');
-
-  socket.onmessage = function (event) {
-    console.log('message', event);
-  };
-
-  socket.onclose = function (event) {
-    console.log('close', event);
-  };
-};
+var ws = io(ws_server);
+ws.on('reload', function (file) {
+  console.log('reload', file);
+  reload(file);
+});
