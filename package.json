@@ -1,6 +1,6 @@
 {
   "name": "simple-lr",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A simple and tiny livereload server and browser client.",
   "main": "index.js",
   "scripts": {
