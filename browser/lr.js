@@ -98,14 +98,18 @@ function get_server () {
   }
 
   var parsed;
+  var server;
 
   if (link_found.indexOf('//') === 0) {
-    link_found += location.protocol === 'https:'
-      ? 'wss:'
-      : 'ws:';
+    link_found = (
+      location.protocol === 'https:'
+        ? 'wss:'
+        : 'ws:'
+    ) + link_found;
 
     parsed = node_url.parse(link_found);
-    return parsed.protocol + '//' + parsed.host;
+    server = parsed.protocol + '//' + parsed.host;
+    return server;
   }
 
   parsed = node_url.parse(link_found);
@@ -120,11 +124,13 @@ function get_server () {
     ? 'wss:'
     : 'ws:';
 
-  return protocol + '//' + parsed.host;
+  var server = protocol + '//' + parsed.host;
+  return server;
 }
 
 
 var ws_server = get_server();
+
 if (!ws_server) {
   console.log('no patched file or reload seed found.');
   return;
