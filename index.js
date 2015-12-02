@@ -93,7 +93,7 @@ function livereload (options) {
       });
     }
 
-    io.emit('reload', query.file);
+    reload(file);
 
     res.status(200).send({
       code: 200,
@@ -110,7 +110,16 @@ function livereload (options) {
     io = socket(server);
   }
 
+
+  function reload (file) {
+    if (io && file) {
+      io.emit('reload', file);
+    }
+  }
+
+
   lr.attach = attach;
+  lr.reload = reload;
 
   return lr;
 }
