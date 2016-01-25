@@ -39,7 +39,6 @@ function append_query (href, key, value) {
   var parsed = node_url.parse(href, true);
   parsed.query[key] = value;
 
-  // 
   delete parsed.search;
   return node_url.format(parsed);
 }
@@ -86,6 +85,10 @@ function get_server () {
   var link_found;
   iterate('script', function (link) {
     var src = link.getAttribute('src');
+    if (!src) {
+      return
+    }
+
     var index = src.indexOf(__pathname);
     if (~index) {
       link_found = src;
