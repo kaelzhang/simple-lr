@@ -20,7 +20,7 @@ function iterate (tag, callback) {
   var i = 0
   var len = els.length
   var result
-  for ( i < len i ++) {
+  for (; i < len; i ++) {
     result = callback(els[i])
 
     // if returns true, then skip
