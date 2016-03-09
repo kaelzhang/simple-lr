@@ -1,5 +1,5 @@
 # simple-lr
-lr-output.js
+browser/lr-output.js
 
 # Numerous always-ignore extensions
 *.bak
