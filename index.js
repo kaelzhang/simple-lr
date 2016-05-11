@@ -10,20 +10,21 @@ var util = require('util')
 var mime = require('mime')
 
 var node_url = require('url')
+var make_array = require('make-array')
 
 // @param {Object} options
 // -
 function livereload (options) {
   options = options || {}
 
-  var matcher = create_patch_regex(options.patch)
+  var matcher = create_matcher(options.patch)
   var io
 
   function lr (req, res, next) {
     var parsed = node_url.parse(req.url, true)
     var path = parsed.pathname
 
-    if (matcher && matcher.test(path)) {
+    if (matcher && matcher(path)) {
       return router_patch_reload_seed(req, path, res, next)
     }
 
@@ -125,20 +126,34 @@ function livereload (options) {
 }
 
 
-function create_patch_regex (patch) {
-  if (!patch) {
+function create_matcher (matches) {
+  matches = make_array(matches)
+
+  if (!matches.length) {
     return
   }
 
-  if (util.isRegExp(patch)) {
-    return patch
+  matches = matches
+  .map(function (match) {
+    if (util.isRegExp(match)) {
+      return match
+    }
+
+    if (typeof match !== 'string') {
+      return
+    }
+
+    return new RegExp(escape(match))
+  })
+  .filter(Boolean)
+
+  function matcher (path) {
+    return matches.some(function (match) {
+      return match.test(path)
+    })
   }
 
-  if (typeof patch !== 'string') {
-    return
-  }
-
-  return new RegExp(escape(patch))
+  return matcher
 }
 
 
