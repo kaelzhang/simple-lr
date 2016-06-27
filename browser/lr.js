@@ -6,7 +6,11 @@ var io = require('socket.io-client')
 
 function reload (src) {
   var type = get_type(src)
-  TYPE[type](src)
+  var method = TYPE[type]
+
+  if (typeof method === 'function') {
+    method(src)
+  }
 }
 
 var REGEX_EXT = /\.([a-z0-9]+)$/i
@@ -69,6 +73,12 @@ var TYPE = {
     iterate('img', function (img) {
       refresh_attribute(img, src, 'src')
     })
+  },
+
+  html: function (src) {
+    if (~location.href.indexOf(src)) {
+      location.reload()
+    }
   }
 }
 
